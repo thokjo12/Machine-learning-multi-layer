@@ -31,3 +31,4 @@ w_i_h = np.random.uniform([-0.5], [0.5], (X_train.shape[1], units_second_layer))
 w_h_o = np.random.uniform([-0.5], [0.5], (units_second_layer, n_classes))
 
 
+
