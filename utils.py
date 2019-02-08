@@ -14,11 +14,10 @@ def create_validation_data(x, y, percentage_train):
     return x_train_s, y_train_s, x_validation_s, y_validation_s
 
 
-def one_hot_encode(y, num_classes):
-    encoded = np.zeros((y.shape[0], num_classes))
-    encoded[np.arange(y.shape[0]), y] = 1
-    return np.reshape(encoded, y.shape + (num_classes,))
-
+def onehot_encode(Y, n_classes=10):
+    onehot = np.zeros((Y.shape[0], n_classes))
+    onehot[np.arange(0, Y.shape[0]), Y] = 1
+    return onehot
 
 def bias_trick(x):
     return np.concatenate((x, np.ones((len(x), 1))), axis=1)

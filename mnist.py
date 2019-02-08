@@ -45,6 +45,8 @@ def load():
     save_path = os.path.join(SAVE_PATH, "mnist.pkl")
     with open(save_path,'rb') as f:
         mnist = pickle.load(f)
+
+    f.close()
     return mnist["training_images"], mnist["training_labels"], mnist["test_images"], mnist["test_labels"]
 
 if __name__ == '__main__':
