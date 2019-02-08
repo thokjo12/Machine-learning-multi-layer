@@ -45,14 +45,11 @@ def forward_pass(w_kj, w_ji, x):
     return a_k, a_j
 
 
-
-
 def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad):
     """
-    :param a_k:
-    :param a_j:
-    :param a_i:
-    :param output: output from the network
+    :param a_k: output from the output layer
+    :param a_j: output from the hidden layer
+    :param a_i: the network input
     :param targets: the truth labels
     :param w_kj: weights from hidden to output
     :param w_ji:  weights from input to hidden
@@ -60,49 +57,72 @@ def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad):
     :param check_grad: boolean val for checking gradients
     :return: new weigth corrections
     """
+
     d_k = -(targets - a_k)
     d_j = (a_j * (1 - a_j)) * d_k.dot(w_kj)
+
     grad_kj = (d_k[:, np.newaxis, :] * a_j[:, :, np.newaxis]).mean(axis=0).T
     grad_ji = (d_j[:, np.newaxis, :] * a_i[:, :, np.newaxis]).mean(axis=0).T
-    check_gradient(x=a_i, targets=targets,w_ji= w_ji,w_kj= w_kj, epsilon=1e-2, grad_ji=grad_ji, grad_kj=grad_kj)
+
+    if check_grad:
+        check_gradient(a_i, targets, w_ji, w_kj, 1e-2, grad_ji, grad_kj)
 
     w_kj = w_kj - lr * grad_kj
     w_ji = w_ji - lr * grad_ji
-    print("wkj {}, wji{}".format(w_kj.shape, w_ji.shape))
-    print("ak {}, aj {}, ai {},".format(a_k.shape, a_j.shape, a_i.shape))
-    print("dk {}, dj {}".format(d_k.shape, d_j.shape))
-    print("grad_kj{}, grad_ji{}".format(grad_kj.shape, grad_ji.shape))
 
     return w_ji, w_kj
 
-def check_gradient(x, targets, w_ji, w_kj, epsilon, grad_ji, grad_kj):
-        print("Checking gradient...")
-        dw_kj = np.zeros_like(w_ji)
-        for k in range(w_kj.shape[0]):
-            for j in range(w_kj.shape[1]):
-                new_kj1, new_kj2 = np.copy(w_ji), np.copy(w_ji)
-                new_kj1[k, j] += epsilon
-                new_kj2[k, j] -= epsilon
-                out1, aj1 = forward_pass(w_kj,new_kj1,x)
-                out2, aj2 = forward_pass(w_kj,new_kj2,x)
-                loss1 = cross_entropy_loss(out1, targets)
-                loss2 = cross_entropy_loss(out2, targets)
-                dw_kj[k, j] = (loss1 - loss2) / (2 * epsilon)
-        maximum_abosulte_difference1 = abs(grad_ji - dw_kj).max()
-        assert maximum_abosulte_difference1 <= epsilon ** 2, "Absolute error was: {}".format(maximum_abosulte_difference1)
 
-        print("Gradient is valid.")
-        print("Absolute error for ji was: {}".format(maximum_abosulte_difference1))
+def check_gradient(a_i, targets, w_ji, w_kj, epsilon, grad_ji, grad_kj):
+    print("Checking gradient...")
+
+    dw_kj = np.zeros_like(w_kj)
+    for k in range(w_kj.shape[0]):
+        for j in range(w_kj.shape[1]):
+            new_kj1, new_kj2 = np.copy(w_kj), np.copy(w_kj)
+            new_kj1[k, j] += epsilon
+            new_kj2[k, j] -= epsilon
+
+            out1, _ = forward_pass(new_kj1, w_ji, a_i)
+            out2, _ = forward_pass(new_kj2, w_ji, a_i)
+
+            loss1 = cross_entropy_loss(out1, targets)
+            loss2 = cross_entropy_loss(out2, targets)
+
+            dw_kj[k, j] = (loss1 - loss2) / (2 * epsilon)
+
+    maximum_abosulte_difference1 = abs(grad_kj - dw_kj).max()
+    assert maximum_abosulte_difference1 <= epsilon ** 2, "Absolute error was: {}".format(maximum_abosulte_difference1)
+
+    print("Gradient for kj is valid.")
+    print("Absolute error for kj was: {}".format(maximum_abosulte_difference1))
+
+    dw_ji = np.zeros_like(w_ji)
+    for j in range(w_ji.shape[0]):
+        for i in range(w_ji.shape[1]):
+            new_ji_1, new_ji_2 = np.copy(w_ji), np.copy(w_ji)
+            new_ji_1[j, i] += epsilon
+            new_ji_2[j, i] -= epsilon
+
+            out3, _ = forward_pass(w_kj, new_ji_1, a_i)
+            out4, _ = forward_pass(w_kj, new_ji_2, a_i)
+
+            loss3 = cross_entropy_loss(out3, targets)
+            loss4 = cross_entropy_loss(out4, targets)
+
+            dw_ji[j, i] = (loss3 - loss4) / (2 * epsilon)
+
+    maximum_abosulte_difference2 = abs(grad_ji - dw_ji).max()
+    assert maximum_abosulte_difference2 <= epsilon ** 2, "Absolute error was: {}".format(maximum_abosulte_difference2)
+
+    print("Gradient for ji is valid.")
+    print("Absolute error for ji was: {}".format(maximum_abosulte_difference2))
 
 
 def fit(w_kj, w_ji, epochs, batches_per_epoch):
     for epoch in range(epochs):
         for iteration in range(batches_per_epoch):
             pass
-
-
-
-
 
             # lr = 0.01
             # def softmax(a):

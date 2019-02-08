@@ -6,9 +6,10 @@ import os
 
 import utils
 
-def weight_initialization(output_units,input_units):
-	weight_shape = (output_units, input_units)
-	return np.random.uniform(-1, 1, weight_shape)
+
+def weight_initialization(output_units, input_units):
+    weight_shape = (output_units, input_units)
+    return np.random.uniform(-1, 1, weight_shape)
 
 
 if not os.path.exists("data/mnist.pkl"):
@@ -34,14 +35,14 @@ Y_test = utils.onehot_encode(Y_test, n_classes)
 Y_train = utils.onehot_encode(Y_train, n_classes)
 
 # weights from input to hidden layer ((28x28+1,Unites_second_layer)
-w_ji = weight_initialization(units_second_layer,X_train.shape[1])
+w_ji = weight_initialization(units_second_layer, X_train.shape[1])
 # weights from hidden to output (Unites_second_layer,Classes)
-w_kj = weight_initialization(n_classes,units_second_layer)
-print(X_test.min(),X_test.max())
-print(X_train.min(),X_train.max())
-print(X_val.min(),X_val.max())
+w_kj = weight_initialization(n_classes, units_second_layer)
+print(X_test.min(), X_test.max())
+print(X_train.min(), X_train.max())
+print(X_val.min(), X_val.max())
 
-a_k, a_j = fcnn.forward_pass(w_ji=w_ji,w_kj=w_kj,x=X_train)
-w_ji,w_kj=fcnn.sgd(a_k=a_k[0:4],a_j=a_j[0:4],a_i=X_train[0:4],targets=Y_train[0:4],w_kj=w_kj,w_ji=w_ji,lr=0.01,check_grad=False)
+a_k, a_j = fcnn.forward_pass(w_ji=w_ji, w_kj=w_kj, x=X_train)
+w_ji, w_kj = fcnn.sgd(a_k=a_k[0:4], a_j=a_j[0:4], a_i=X_train[0:4], targets=Y_train[0:4], w_kj=w_kj, w_ji=w_ji, lr=0.01,
+                      check_grad=True)
 print(w_ji.shape, w_kj.shape)
-
