@@ -16,6 +16,15 @@ def accuracy(target, output):
 
 
 def cross_entropy_loss(output, targets, eps=1e-15):
+    """
+    gives us a measure on how accurate the model predictions are
+    sums all targets and the log of the output into a NX1 matrix which gives us
+    the loss for each of these samples, then we can take the average and we get the average loss for the whole set.
+    :param eps: a small variable to prevent 0 in log
+    :param targets: the labels
+    :param output: the predicted labels
+    :return: the average loss over a batch
+    """
     cost = np.sum(targets * np.log(output + eps), axis=1)
     return - np.mean(cost)
 
@@ -24,8 +33,15 @@ def sigmoid(z):
     return 1.0 / (1.0 + np.exp(-z))
 
 
-def softmax(a):
-    a_exp = np.exp(a)
+def softmax(z):
+    """
+    takes a vector of dimension (N,NUM_CLASSES) and forms a normalized probability vector with the length of NUM_CLASSES
+    each probability vector/classification vector should sum to 1, in some cases it will not because of floating point
+    rounding errors.
+    :param z: the forward pass output
+    :return: a NXNUM_CLASSES matrix depicting the probabilities for N samples relative to NUM_CLASSES.
+    """
+    a_exp = np.exp(z)
     return a_exp / a_exp.sum(axis=1, keepdims=True)
 
 
@@ -55,7 +71,7 @@ def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad):
     :param w_ji:  weights from input to hidden
     :param lr: learning rate
     :param check_grad: boolean val for checking gradients
-    :return: new weigth corrections
+    :return: new weight corrections
     """
 
     d_k = -(targets - a_k)
@@ -74,6 +90,17 @@ def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad):
 
 
 def check_gradient(a_i, targets, w_ji, w_kj, epsilon, grad_ji, grad_kj):
+    """
+    checking of gradients with numerical approximation of the function gradient.
+    :param a_i: network input
+    :param targets: the target labels
+    :param w_ji: weights from input to hidden layer
+    :param w_kj: weights from hidden to output
+    :param epsilon: our error "space"
+    :param grad_ji: the gradient function for input -> hidden
+    :param grad_kj: the gradient function for hidden -> output
+    :return: no return
+    """
     print("Checking gradient...")
 
     dw_kj = np.zeros_like(w_kj)
@@ -124,26 +151,3 @@ def fit(w_kj, w_ji, epochs, batches_per_epoch):
         for iteration in range(batches_per_epoch):
             pass
 
-            # lr = 0.01
-            # def softmax(a):
-            #     a_exp = np.exp(a)
-            #     return a_exp / a_exp.sum(axis=1, keepdims=True)
-            #
-            #
-            # w_ji = np.zeros((784, 64))
-            # w_kj = np.zeros((64, 10))
-            #
-            # x_i = np.zeros((32, 784))
-            # truth = np.random.random((1, 10))
-            # a_j = -x_i.dot(w_ji)
-            # a_k = a_j.dot(w_kj)
-            # dk = (-(truth - a_k))
-            # dj = np.multiply((a_j * (1 - a_j)),dk.dot(w_kj.T))
-            # w_kj_new = w_kj - lr * (a_j.T.dot(dk))
-            # w_ji_new = w_ji - lr *x_i.T.dot(dj)
-            # print("input shapes: xi{} w_ji{} w_kj{}".format(x_i.shape,w_ji.shape,w_kj.shape))
-            # print("sig shape in hidden layer: ",a_j.shape)
-            # print("softmax shape in output layer: ",a_k.shape)
-            # print("shape of delta rule in output:",dk.shape)
-            # print("shape of delta rule in hidden",dj.shape)
-            # print("new w_ji {} new w_kj {}".format(w_ji.shape,w_kj.shape))
