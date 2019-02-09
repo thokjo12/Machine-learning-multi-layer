@@ -19,5 +19,6 @@ def onehot_encode(Y, n_classes=10):
     onehot[np.arange(0, Y.shape[0]), Y] = 1
     return onehot
 
+
 def bias_trick(x):
     return np.concatenate((x, np.ones((len(x), 1))), axis=1)
