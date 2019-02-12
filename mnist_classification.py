@@ -39,8 +39,8 @@ w_ji, w_kj, meta = multi_layer_network.fit(x_train=X_train, y_train=Y_train,
                                            x_test=X_test, y_test=Y_test,
                                            w_kj=w_kj, w_ji=w_ji,
                                            epochs=15, check_step_divisor=10,
-                                           batch_size=32, lr=0.5,
-                                           check_grad=False)
+                                           batch_size=32, initial_lr=0.5,
+                                           lr_decay=None, check_grad=False)
 
 final_a_k, final_a_j, = multi_layer_network.forward_pass(w_kj, w_ji, X_test)
 final_test_loss = multi_layer_network.cross_entropy_loss(final_a_k, Y_test)
