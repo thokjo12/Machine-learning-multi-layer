@@ -41,13 +41,25 @@ w_ji = weight_initialization(units_second_layer, X_train.shape[1])
 w_kj = weight_initialization(n_classes, units_second_layer)
 
 
-w_kj, w_ji, meta = multi_layer_network.fit(x_train=X_train, y_train=Y_train,
+w_ji,w_kj, meta = multi_layer_network.fit(x_train=X_train, y_train=Y_train,
                                            x_val=X_val, y_val=Y_val,
                                            x_test=X_test, y_test=Y_test,
                                            w_kj=w_kj, w_ji=w_ji,
-                                           epochs=15, check_step=20,
-                                           batch_size=64, lr=0.5,
+                                           epochs=15, check_step=10,
+                                           batch_size=32, lr=.5,
                                            check_grad=False)
+
+final_a_k,final_a_j, = multi_layer_network.forward_pass(w_kj, w_ji, X_test)
+final_test_loss = multi_layer_network.cross_entropy_loss(final_a_k, Y_test)
+final_test_accuracy = multi_layer_network.accuracy(Y_test, final_a_k)
+
+print("final training loss for training during training: {}".format(meta["train_loss"][-1]))
+print("final validation loss for validation during training: {}".format(meta["val_loss"][-1]))
+print("Test loss on the test set: {}".format(final_test_loss))
+print("Final accuracy on the test set:", final_test_accuracy)
+# print("Final accuracy on the Training set: ",
+#       lin_reg_fcnn.calc_accuracy(lin_reg_fcnn.forward_pass(X_train, w), Y_train))
+# print("Final accuracy on the Validation set: ", lin_reg_fcnn.calc_accuracy(lin_reg_fcnn.forward_pass(X_val, w), Y_val))
 
 
 plt.figure(figsize=(12, 8))
@@ -56,10 +68,10 @@ plt.ylabel("Loss")
 plt.plot(meta["step"], meta["train_loss"], label="Training loss")
 plt.plot(meta["step"], meta["val_loss"], label="valdiation loss")
 plt.plot(meta["step"], meta["test_loss"], label="test loss")
-# plt.plot(meta["step"][-1], final_loss, ".", label="Final test loss")
+plt.plot(meta["step"][-1], final_test_loss, ".", label="Final test loss")
+plt.legend()
 
-
-#plot accuracy
+# plot accuracy
 plt.figure(figsize=(12, 8))
 plt.xlabel("Iterations")
 plt.ylabel("Accuracy")
@@ -70,5 +82,5 @@ plt.legend()
 plt.show()
 
 # a_k, a_j = multi_layer_network.forward_pass(w_ji=w_ji, w_kj=w_kj, x=X_train)
-# w_ji, w_kj = multi_layer_network.sgd(a_k=a_k[0:4], a_j=a_j[0:4], a_i=X_train[0:4], targets=Y_train[0:4], w_kj=w_kj, w_ji=w_ji,
-#  lr=0.01,check_grad=True,norm_factor=4*10)
+# w_ji, w_kj = multi_layer_network.sgd(a_k=a_k[0:256], a_j=a_j[0:256], a_i=X_train[0:256], targets=Y_train[0:256], w_kj=w_kj, w_ji=w_ji,
+#  lr=0.01,check_grad=True,norm_factor=256*10)
