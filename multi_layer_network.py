@@ -82,9 +82,7 @@ def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad,norm_factor):
 
     grad_kj = d_k.T.dot(a_j) / norm_factor
     grad_ji = d_j.T.dot(a_i) / norm_factor
-    # double check these as they cost too much to perform but seem to have more "realistic values"
-    # grad_kj = (d_k[:, np.newaxis, :] * a_j[:, :, np.newaxis]).mean(axis=0)  # dk -> (n,1,10) a_j -> (n,64,1)
-    # grad_ji = (d_j[:, np.newaxis, :] * a_i[:, :, np.newaxis]).mean(axis=0)  # dj -> (n,1,64) a_i -> (n,785,1)
+
     if check_grad:
         check_gradient(a_i, targets, w_ji, w_kj, 1e-2, grad_ji, grad_kj)
 
