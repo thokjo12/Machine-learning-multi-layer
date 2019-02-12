@@ -22,3 +22,8 @@ def onehot_encode(Y, n_classes=10):
 
 def bias_trick(x):
     return np.concatenate((x, np.ones((len(x), 1))), axis=1)
+
+
+def weight_initialization(output_units, input_units):
+    weight_shape = (output_units, input_units)
+    return np.random.uniform(-1, 1, weight_shape)

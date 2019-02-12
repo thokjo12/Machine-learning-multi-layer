@@ -6,12 +6,6 @@ import os
 
 import utils
 
-
-def weight_initialization(output_units, input_units):
-    weight_shape = (output_units, input_units)
-    return np.random.uniform(-1, 1, weight_shape)
-
-
 if not os.path.exists("data/mnist.pkl"):
     mnist.init()
 
@@ -35,10 +29,10 @@ Y_train = utils.onehot_encode(Y_train, n_classes)
 Y_val = utils.onehot_encode(Y_val, n_classes)
 
 # weights from input to hidden layer ((28x28+1,Unites_second_layer)
-w_ji = weight_initialization(units_second_layer, X_train.shape[1])
+w_ji = utils.weight_initialization(units_second_layer, X_train.shape[1])
 
 # weights from hidden to output (Unites_second_layer,Classes)
-w_kj = weight_initialization(n_classes, units_second_layer)
+w_kj = utils.weight_initialization(n_classes, units_second_layer)
 
 w_ji, w_kj, meta = multi_layer_network.fit(x_train=X_train, y_train=Y_train,
                                            x_val=X_val, y_val=Y_val,
