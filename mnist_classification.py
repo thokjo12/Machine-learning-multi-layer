@@ -40,16 +40,15 @@ w_ji = weight_initialization(units_second_layer, X_train.shape[1])
 # weights from hidden to output (Unites_second_layer,Classes)
 w_kj = weight_initialization(n_classes, units_second_layer)
 
-
-w_ji,w_kj, meta = multi_layer_network.fit(x_train=X_train, y_train=Y_train,
+w_ji, w_kj, meta = multi_layer_network.fit(x_train=X_train, y_train=Y_train,
                                            x_val=X_val, y_val=Y_val,
                                            x_test=X_test, y_test=Y_test,
                                            w_kj=w_kj, w_ji=w_ji,
-                                           epochs=15, check_step=10,
-                                           batch_size=32, lr=.5,
+                                           epochs=15, check_step_divisor=10,
+                                           batch_size=32, lr=0.5,
                                            check_grad=False)
 
-final_a_k,final_a_j, = multi_layer_network.forward_pass(w_kj, w_ji, X_test)
+final_a_k, final_a_j, = multi_layer_network.forward_pass(w_kj, w_ji, X_test)
 final_test_loss = multi_layer_network.cross_entropy_loss(final_a_k, Y_test)
 final_test_accuracy = multi_layer_network.accuracy(Y_test, final_a_k)
 
@@ -57,10 +56,6 @@ print("final training loss for training during training: {}".format(meta["train_
 print("final validation loss for validation during training: {}".format(meta["val_loss"][-1]))
 print("Test loss on the test set: {}".format(final_test_loss))
 print("Final accuracy on the test set:", final_test_accuracy)
-# print("Final accuracy on the Training set: ",
-#       lin_reg_fcnn.calc_accuracy(lin_reg_fcnn.forward_pass(X_train, w), Y_train))
-# print("Final accuracy on the Validation set: ", lin_reg_fcnn.calc_accuracy(lin_reg_fcnn.forward_pass(X_val, w), Y_val))
-
 
 plt.figure(figsize=(12, 8))
 plt.xlabel("Iterations")

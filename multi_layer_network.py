@@ -3,6 +3,13 @@ import time
 import numpy as np
 
 
+def should_early_stop(validation_loss, num_steps=3):
+    if len(validation_loss) < num_steps + 1:
+        return False
+    is_increasing = [validation_loss[i] <= validation_loss[i + 1] for i in range(-num_steps - 1, -1)]
+    return sum(is_increasing) == len(is_increasing)
+
+
 def accuracy(target, output):
     """
     Takes the argmax of targets, which returns only the indexes that are one for axis 1,
@@ -29,7 +36,7 @@ def cross_entropy_loss(output, targets, eps=1e-15):
     """
     # sum
     # cost = np.sum(targets * np.log(output))
-    cost = targets * np.log(output+eps)
+    cost = targets * np.log(output + eps)
     return - np.mean(cost)
 
 
@@ -65,7 +72,7 @@ def forward_pass(w_kj, w_ji, x):
     return a_k, a_j
 
 
-def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad,norm_factor):
+def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad, norm_factor):
     """
     :param a_k: output from the output layer
     :param a_j: output from the hidden layer
@@ -92,25 +99,28 @@ def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad,norm_factor):
     return w_ji, w_kj
 
 
-def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, check_step, batch_size, lr,
-        check_grad=False):
+STEP = []
+
+TRAIN_LOSS = []
+VAL_LOSS = []
+TEST_LOSS = []
+
+TEST_ACC = []
+VAL_ACC = []
+TRAIN_ACC = []
+
+
+def fit(x_train, y_train, x_val, y_val, x_test, y_test,w_kj, w_ji, epochs, check_step_divisor, batch_size, lr, check_grad=False):
+
+    meta = {"val_loss": VAL_LOSS, "train_loss": TRAIN_LOSS, "test_loss": TEST_LOSS, "test_acc": TEST_ACC,
+            "val_acc": VAL_ACC, "train_acc": TRAIN_ACC, "step": STEP}
 
     batches_per_epoch = x_train.shape[0] // batch_size
-    check_step = batches_per_epoch // check_step
-    norm_factor = (batch_size * 10)
-    STEP = []
-
-    TRAIN_LOSS = []
-    VAL_LOSS = []
-    TEST_LOSS = []
-
-    TEST_ACC = []
-    VAL_ACC = []
-    TRAIN_ACC = []
-
+    normalization_factor = (batch_size * y_train.shape[1])
+    check_step = batches_per_epoch // check_step_divisor
     iteration = 0
+
     for epoch in range(epochs):
-        print(epoch)
         for i in range(batches_per_epoch):
             iteration += 1
 
@@ -118,10 +128,9 @@ def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, chec
             y_batch = y_train[i * batch_size:(i + 1) * batch_size]
 
             a_k_out, a_j_out = forward_pass(w_kj, w_ji, x_batch)
-            w_ji, w_kj = sgd(a_k_out, a_j_out, x_batch, y_batch, w_kj, w_ji, lr, check_grad,norm_factor)
+            w_ji, w_kj = sgd(a_k_out, a_j_out, x_batch, y_batch, w_kj, w_ji, lr, check_grad, normalization_factor)
 
             if i % check_step == 0:
-
                 STEP.append(iteration)
                 a_k_train, a_j_train = forward_pass(w_kj, w_ji, x_train)
                 a_k_val, a_j_val = forward_pass(w_kj, w_ji, x_val)
@@ -135,14 +144,12 @@ def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, chec
                 VAL_LOSS.append(cross_entropy_loss(a_k_val, y_val))
                 TEST_LOSS.append(cross_entropy_loss(a_k_test, y_test))
 
-    return w_ji, w_kj, {
-        "val_loss": VAL_LOSS,
-        "train_loss": TRAIN_LOSS,
-        "test_loss": TEST_LOSS,
-        "test_acc": TEST_ACC,
-        "val_acc": VAL_ACC,
-        "train_acc": TRAIN_ACC,
-        "step": STEP}
+                if should_early_stop(VAL_LOSS):
+                    print("early stop")
+                    return w_ji, w_kj, meta
+
+    return w_ji, w_kj, meta
+
 
 def check_gradient(a_i, targets, w_ji, w_kj, epsilon, grad_ji, grad_kj):
     """
