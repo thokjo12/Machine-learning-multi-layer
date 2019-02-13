@@ -14,7 +14,7 @@ def learning_rate_annealing(initial_lr, count, t_decay):
     return initial_lr / (1 + count / t_decay)
 
 
-def should_early_stop(validation_loss, num_steps=3):
+def should_early_stop(validation_loss, num_steps=100):
     if len(validation_loss) < num_steps + 1:
         return False
     is_increasing = [validation_loss[i] <= validation_loss[i + 1] for i in range(-num_steps - 1, -1)]
@@ -53,6 +53,11 @@ def sigmoid(z):
     return 1.0 / (1.0 + np.exp(-z))
 
 
+def improved_sigmoid(z):
+    # return (np.exp(z)-np.exp(-z))/(np.exp(z)+np.exp(-z))
+    return np.tanh(z)
+
+
 def softmax(z):
     """
     takes a vector of dimension (N,NUM_CLASSES) and forms a normalized probability vector with the length of NUM_CLASSES
@@ -74,7 +79,7 @@ def forward_pass(w_kj, w_ji, x):
     :return: outputs the activation of each layer
     """
     z_j = x.dot(w_ji.T)
-    a_j = sigmoid(z_j)
+    a_j = improved_sigmoid(z_j)
 
     z_k = a_j.dot(w_kj.T)
     a_k = softmax(z_k)
@@ -94,7 +99,7 @@ def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad, norm_factor):
     :return: new weight corrections
     """
     d_k = -(targets - a_k)
-    d_j = (a_j * (1 - a_j)) * d_k.dot(w_kj)
+    d_j = (1-a_j**2) * d_k.dot(w_kj)
 
     grad_kj = d_k.T.dot(a_j) / norm_factor
     grad_ji = d_j.T.dot(a_i) / norm_factor
@@ -121,7 +126,6 @@ TRAIN_ACC = []
 
 def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, check_step_divisor, batch_size, initial_lr,
         lr_decay, check_grad=False):
-
     meta = {"val_loss": VAL_LOSS, "train_loss": TRAIN_LOSS, "test_loss": TEST_LOSS, "test_acc": TEST_ACC,
             "val_acc": VAL_ACC, "train_acc": TRAIN_ACC, "step": STEP}
 
@@ -173,7 +177,8 @@ def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, chec
 
         lr = learning_rate_annealing(initial_lr, iteration, lr_decay)
         print("\nEpoch", epoch, "Complete:")
-        print("Train loss: {:.4f} Test loss: {:.4f} Val loss: {:.4f}".format(TRAIN_LOSS[-1], TEST_LOSS[-1], VAL_LOSS[-1]))
+        print(
+            "Train loss: {:.4f} Test loss: {:.4f} Val loss: {:.4f}".format(TRAIN_LOSS[-1], TEST_LOSS[-1], VAL_LOSS[-1]))
 
     if check_grad:
         print("max abs for kj: ", max(abs_approx_values_kj), "max abs for ji:", max(abs_approx_values_ji))
