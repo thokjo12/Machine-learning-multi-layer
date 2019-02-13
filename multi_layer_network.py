@@ -88,6 +88,7 @@ def forward_pass(w_kj, w_ji, x):
 
 def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad, norm_factor):
     """
+    :param norm_factor:
     :param a_k: output from the output layer
     :param a_j: output from the hidden layer
     :param a_i: the network input
@@ -100,7 +101,7 @@ def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad, norm_factor):
     """
     d_k = -(targets - a_k)
     d_j = (1-a_j**2) * d_k.dot(w_kj)
-
+    # d_j = 1.7159*((2/3)-(2/3)*(a_j**2)) * d_k.dot(w_kj)
     grad_kj = d_k.T.dot(a_j) / norm_factor
     grad_ji = d_j.T.dot(a_i) / norm_factor
 
