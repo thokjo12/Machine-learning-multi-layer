@@ -42,14 +42,23 @@ w_ji, w_kj, meta = multi_layer_network.fit(x_train=X_train, y_train=Y_train,
                                            batch_size=32, initial_lr=0.5,
                                            lr_decay=None, check_grad=False)
 
-final_a_k, final_a_j, = multi_layer_network.forward_pass(w_kj, w_ji, X_test)
-final_test_loss = multi_layer_network.cross_entropy_loss(final_a_k, Y_test)
-final_test_accuracy = multi_layer_network.accuracy(Y_test, final_a_k)
+test_final_a_k, test_final_a_j, = multi_layer_network.forward_pass(w_kj, w_ji, X_test)
+final_test_loss = multi_layer_network.cross_entropy_loss(test_final_a_k, Y_test)
+final_test_accuracy = multi_layer_network.accuracy(Y_test, test_final_a_k)
 
+validation_final_a_k, validation_final_a_j, = multi_layer_network.forward_pass(w_kj, w_ji, X_val)
+final_validation_loss = multi_layer_network.cross_entropy_loss(validation_final_a_k, Y_val)
+final_validation_accuracy = multi_layer_network.accuracy(Y_val, validation_final_a_k)
+
+train_final_a_k, train_final_a_j, = multi_layer_network.forward_pass(w_kj, w_ji, X_train)
+final_train_loss = multi_layer_network.cross_entropy_loss(train_final_a_k, Y_train)
+final_train_accuracy = multi_layer_network.accuracy(Y_train, train_final_a_k)
 print("final training loss for training during training: {}".format(meta["train_loss"][-1]))
 print("final validation loss for validation during training: {}".format(meta["val_loss"][-1]))
 print("Test loss on the test set: {}".format(final_test_loss))
 print("Final accuracy on the test set:", final_test_accuracy)
+print("Final accuracy on the train set:", final_train_accuracy)
+print("Final accuracy on the validation set:", final_validation_accuracy)
 
 plt.figure(figsize=(12, 8))
 plt.xlabel("Iterations")
@@ -70,6 +79,3 @@ plt.plot(meta["step"], meta["test_acc"], label="test acc")
 plt.legend()
 plt.show()
 
-# a_k, a_j = multi_layer_network.forward_pass(w_ji=w_ji, w_kj=w_kj, x=X_train)
-# w_ji, w_kj = multi_layer_network.sgd(a_k=a_k[0:256], a_j=a_j[0:256], a_i=X_train[0:256], targets=Y_train[0:256], w_kj=w_kj, w_ji=w_ji,
-#  lr=0.01,check_grad=True,norm_factor=256*10)

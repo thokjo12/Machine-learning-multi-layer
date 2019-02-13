@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 
 
@@ -122,8 +120,8 @@ TRAIN_ACC = []
 
 
 def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, check_step_divisor, batch_size, initial_lr,
-        lr_decay,
-        check_grad=False):
+        lr_decay, check_grad=False):
+
     meta = {"val_loss": VAL_LOSS, "train_loss": TRAIN_LOSS, "test_loss": TEST_LOSS, "test_acc": TEST_ACC,
             "val_acc": VAL_ACC, "train_acc": TRAIN_ACC, "step": STEP}
 
@@ -132,16 +130,28 @@ def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, chec
     check_step = batches_per_epoch // check_step_divisor
     iteration = 0
     lr = initial_lr
+    grad_check_epoch = []
+
     for epoch in range(epochs):
+        items = np.arange(x_train.shape[0])
+        np.random.shuffle(items)
+        x_train = x_train[items]
+        y_train = y_train[items]
         for i in range(batches_per_epoch):
             iteration += 1
 
             x_batch = x_train[i * batch_size:(i + 1) * batch_size]
             y_batch = y_train[i * batch_size:(i + 1) * batch_size]
 
-            a_k_out, a_j_out = forward_pass(w_kj, w_ji, x_batch)
+            if check_grad:
+                do_check = (epoch == 0 or epoch == (epochs - 1) // 2
+                            or epoch == epochs - 1) and epoch not in grad_check_epoch
+                grad_check_epoch.append(epoch)
+            else:
+                do_check = False
 
-            w_ji, w_kj = sgd(a_k_out, a_j_out, x_batch, y_batch, w_kj, w_ji, lr, check_grad, normalization_factor)
+            a_k_out, a_j_out = forward_pass(w_kj, w_ji, x_batch)
+            w_ji, w_kj = sgd(a_k_out, a_j_out, x_batch, y_batch, w_kj, w_ji, lr, do_check, normalization_factor)
 
             if i % check_step == 0:
                 STEP.append(iteration)
@@ -158,13 +168,15 @@ def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, chec
                 TEST_LOSS.append(cross_entropy_loss(a_k_test, y_test))
 
                 if should_early_stop(VAL_LOSS):
-                    print("early stop")
+                    print("Early stop at epoch:", epoch)
                     return w_ji, w_kj, meta
 
-        print("epoch", epoch, "complete, Train loss: ", TRAIN_LOSS[-1], "Test loss: ", TEST_LOSS[-1], "Val loss: ", VAL_LOSS[-1])
         lr = learning_rate_annealing(initial_lr, iteration, lr_decay)
+        print("\nEpoch", epoch, "Complete:")
+        print("Train loss: {:.4f} Test loss: {:.4f} Val loss: {:.4f}".format(TRAIN_LOSS[-1], TEST_LOSS[-1], VAL_LOSS[-1]))
 
-    print("max abs for kj:", max(abs_approx_values_kj), "max abs for ji:", max(abs_approx_values_ji))
+    if check_grad:
+        print("max abs for kj: ", max(abs_approx_values_kj), "max abs for ji:", max(abs_approx_values_ji))
     return w_ji, w_kj, meta
 
 
