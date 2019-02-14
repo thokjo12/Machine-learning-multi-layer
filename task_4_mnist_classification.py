@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import multilayer_network
+import task4
 import mnist
 import os
 
@@ -10,7 +10,8 @@ if not os.path.exists("data/mnist.pkl"):
     mnist.init()
 
 n_classes = 10
-units_second_layer = 64
+units_second_layer = 59
+units_third_layer = 59
 
 X_train, Y_train, X_test, Y_test = mnist.load()
 X_train, Y_train, X_val, Y_val = utils.create_validation_data(X_train, Y_train, percentage_train=0.9)
@@ -30,32 +31,34 @@ Y_val = utils.onehot_encode(Y_val, n_classes)
 
 bound_w_ji = 1 / np.sqrt(X_train.shape[1])
 bound_w_kj = 1 / np.sqrt(units_second_layer)
+bound_w_mk = 1 / np.sqrt(units_third_layer)
 
 # weights from input to hidden layer ((28x28+1,Unites_second_layer)
 w_ji = np.random.normal(0, bound_w_ji, (units_second_layer, X_train.shape[1]))
 
 # weights from hidden to output (Unites_second_layer,Classes)
-w_kj = np.random.normal(0, bound_w_kj, (n_classes, units_second_layer))
+w_kj = np.random.normal(0, bound_w_kj, (units_second_layer, units_second_layer))
+w_mk = np.random.normal(0, bound_w_mk, (n_classes, units_second_layer))
 
-w_ji, w_kj, meta = multilayer_network.fit(x_train=X_train, y_train=Y_train,
-                             x_val=X_val, y_val=Y_val,
-                             x_test=X_test, y_test=Y_test,
-                             w_kj=w_kj, w_ji=w_ji,
-                             epochs=15, check_step_divisor=10,
-                             batch_size=32, initial_lr=0.05,
-                             lr_decay=None, my=0.2, check_grad=False)
+w_ji, w_kj, w_mk, meta = task4.fit(x_train=X_train, y_train=Y_train,
+                                   x_val=X_val, y_val=Y_val,
+                                   x_test=X_test, y_test=Y_test,
+                                   w_kj=w_kj, w_ji=w_ji, w_mk=w_mk,
+                                   epochs=15, check_step_divisor=10,
+                                   batch_size=32, initial_lr=0.05,
+                                   lr_decay=None, my=0.2, check_grad=False)
 
-test_final_a_k, test_final_a_j, = multilayer_network.forward_pass(w_kj, w_ji, X_test)
-final_test_loss = multilayer_network.cross_entropy_loss(test_final_a_k, Y_test)
-final_test_accuracy = multilayer_network.accuracy(Y_test, test_final_a_k)
+test_final_a_m, test_final_a_k, test_final_a_j, = task4.forward_pass(w_kj, w_ji, w_mk, X_test)
+final_test_loss = task4.cross_entropy_loss(test_final_a_m, Y_test)
+final_test_accuracy = task4.accuracy(Y_test, test_final_a_m)
 
-validation_final_a_k, validation_final_a_j, = multilayer_network.forward_pass(w_kj, w_ji, X_val)
-final_validation_loss = multilayer_network.cross_entropy_loss(validation_final_a_k, Y_val)
-final_validation_accuracy = multilayer_network.accuracy(Y_val, validation_final_a_k)
+validation_final_a_m, validation_final_a_k, validation_final_a_j, = task4.forward_pass(w_kj, w_ji, w_mk, X_val)
+final_validation_loss = task4.cross_entropy_loss(validation_final_a_m, Y_val)
+final_validation_accuracy = task4.accuracy(Y_val, validation_final_a_m)
 
-train_final_a_k, train_final_a_j, = multilayer_network.forward_pass(w_kj, w_ji, X_train)
-final_train_loss = multilayer_network.cross_entropy_loss(train_final_a_k, Y_train)
-final_train_accuracy = multilayer_network.accuracy(Y_train, train_final_a_k)
+train_final_a_m, train_final_a_k, train_final_a_j, = task4.forward_pass(w_kj, w_ji, w_mk, X_train)
+final_train_loss = task4.cross_entropy_loss(train_final_a_m, Y_train)
+final_train_accuracy = task4.accuracy(Y_train, train_final_a_m)
 print("final training loss for training during training: {}".format(meta["train_loss"][-1]))
 print("final validation loss for validation during training: {}".format(meta["val_loss"][-1]))
 print("Test loss on the test set: {}".format(final_test_loss))
