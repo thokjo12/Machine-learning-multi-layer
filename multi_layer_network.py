@@ -14,7 +14,7 @@ def learning_rate_annealing(initial_lr, count, t_decay):
     return initial_lr / (1 + count / t_decay)
 
 
-def should_early_stop(validation_loss, num_steps=100):
+def should_early_stop(validation_loss, num_steps=10):
     if len(validation_loss) < num_steps + 1:
         return False
     is_increasing = [validation_loss[i] <= validation_loss[i + 1] for i in range(-num_steps - 1, -1)]
@@ -54,8 +54,7 @@ def sigmoid(z):
 
 
 def improved_sigmoid(z):
-    # return (np.exp(z)-np.exp(-z))/(np.exp(z)+np.exp(-z))
-    return np.tanh(z)
+    return 1.7159 * np.tanh((2 / 3) * z)
 
 
 def softmax(z):
@@ -86,7 +85,7 @@ def forward_pass(w_kj, w_ji, x):
     return a_k, a_j
 
 
-def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad, norm_factor):
+def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad, norm_factor, prev_update_kj, prev_update_ji, my=0):
     """
     :param norm_factor:
     :param a_k: output from the output layer
@@ -100,18 +99,19 @@ def sgd(a_k, a_j, a_i, targets, w_kj, w_ji, lr, check_grad, norm_factor):
     :return: new weight corrections
     """
     d_k = -(targets - a_k)
-    d_j = (1-a_j**2) * d_k.dot(w_kj)
-    # d_j = 1.7159*((2/3)-(2/3)*(a_j**2)) * d_k.dot(w_kj)
+    d_j = ((1.7159 * 2.0) / (3.0 * (np.cosh((2 / 3) * a_i.dot(w_ji.T)) ** 2.0))) * d_k.dot(w_kj)
     grad_kj = d_k.T.dot(a_j) / norm_factor
     grad_ji = d_j.T.dot(a_i) / norm_factor
 
     if check_grad:
         check_gradient(a_i, targets, w_ji, w_kj, 1e-2, grad_ji, grad_kj)
 
-    w_kj = w_kj - lr * grad_kj
-    w_ji = w_ji - lr * grad_ji
+    prev_update_kj = lr * grad_kj + my * prev_update_kj
+    prev_update_ji = lr * grad_ji + my * prev_update_ji
+    w_kj = w_kj - prev_update_kj
+    w_ji = w_ji - prev_update_ji
 
-    return w_ji, w_kj
+    return w_ji, w_kj, prev_update_ji, prev_update_kj
 
 
 STEP = []
@@ -126,7 +126,7 @@ TRAIN_ACC = []
 
 
 def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, check_step_divisor, batch_size, initial_lr,
-        lr_decay, check_grad=False):
+        lr_decay, my, check_grad=False):
     meta = {"val_loss": VAL_LOSS, "train_loss": TRAIN_LOSS, "test_loss": TEST_LOSS, "test_acc": TEST_ACC,
             "val_acc": VAL_ACC, "train_acc": TRAIN_ACC, "step": STEP}
 
@@ -137,11 +137,15 @@ def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, chec
     lr = initial_lr
     grad_check_epoch = []
 
+
     for epoch in range(epochs):
         items = np.arange(x_train.shape[0])
         np.random.shuffle(items)
         x_train = x_train[items]
         y_train = y_train[items]
+
+        prev_update_kj = np.zeros_like(w_kj)
+        prev_update_ji = np.zeros_like(w_ji)
         for i in range(batches_per_epoch):
             iteration += 1
 
@@ -156,7 +160,9 @@ def fit(x_train, y_train, x_val, y_val, x_test, y_test, w_kj, w_ji, epochs, chec
                 do_check = False
 
             a_k_out, a_j_out = forward_pass(w_kj, w_ji, x_batch)
-            w_ji, w_kj = sgd(a_k_out, a_j_out, x_batch, y_batch, w_kj, w_ji, lr, do_check, normalization_factor)
+            w_ji, w_kj, prev_update_ji, prev_update_kj = sgd(a_k_out, a_j_out, x_batch, y_batch, w_kj, w_ji, lr,
+                                                             do_check, normalization_factor, prev_update_kj,
+                                                             prev_update_ji, my)
 
             if i % check_step == 0:
                 STEP.append(iteration)

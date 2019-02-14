@@ -28,19 +28,23 @@ Y_test = utils.onehot_encode(Y_test, n_classes)
 Y_train = utils.onehot_encode(Y_train, n_classes)
 Y_val = utils.onehot_encode(Y_val, n_classes)
 
-# weights from input to hidden layer ((28x28+1,Unites_second_layer)
-w_ji = utils.weight_initialization(units_second_layer, X_train.shape[1])
+bound_w_ji = 1/np.sqrt(X_train.shape[1])
+bound_w_kj = 1/np.sqrt(units_second_layer)
 
+
+# weights from input to hidden layer ((28x28+1,Unites_second_layer)
+w_ji = np.random.normal(0,bound_w_ji,(units_second_layer, X_train.shape[1]))
 # weights from hidden to output (Unites_second_layer,Classes)
-w_kj = utils.weight_initialization(n_classes, units_second_layer)
+w_kj = np.random.normal(0,bound_w_kj,(n_classes, units_second_layer))
+
 
 w_ji, w_kj, meta = multi_layer_network.fit(x_train=X_train, y_train=Y_train,
                                            x_val=X_val, y_val=Y_val,
                                            x_test=X_test, y_test=Y_test,
                                            w_kj=w_kj, w_ji=w_ji,
                                            epochs=15, check_step_divisor=10,
-                                           batch_size=32, initial_lr=0.5,
-                                           lr_decay=None, check_grad=False)
+                                           batch_size=32, initial_lr=0.05,
+                                           lr_decay=None,my=0, check_grad=False)
 
 test_final_a_k, test_final_a_j, = multi_layer_network.forward_pass(w_kj, w_ji, X_test)
 final_test_loss = multi_layer_network.cross_entropy_loss(test_final_a_k, Y_test)
