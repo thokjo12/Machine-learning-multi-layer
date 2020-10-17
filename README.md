@@ -3,8 +3,8 @@ Project based on Machine learning, both single layer and multi layer networks fo
 
 Course work intended to teach the building blocks of Neural networks. 
 
-Network.py contains a single hidden layer network 
-multilayer_network.py contains a network with two hidden layers. 
+Network.py contains a single hidden layer network   
+multilayer_network.py contains a network with two hidden layers.   
 
 Each network implements SGD, softmax and sigmoid, it does use variations of sigmoid aka the Improved sigmoid. 
 
